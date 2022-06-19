@@ -23,18 +23,37 @@ class MssqlConnection():
             autocommit=True)
         return conn
 
-    def operate_database(self):
+    def operate_database(self, row):
         connect = self.connect_mssql()
         cursor = connect.cursor()
         cursor.execute(r"""
-	        BULK INSERT [PBI-DATA].[dbo].[priceData]
-	        FROM 'C:\Users\Oliver Beardsall\GitKraken\DB-Upload\server\files\Products.csv'
-	        WITH (FIRSTROW = 2,
-	        FIELDTERMINATOR = ',',
-	        ROWTERMINATOR='\n',
-	        MAXERRORS=2);
-            """) # TODO: Make it so that the path is not explicit as then it doesnt matter where this is located.
-            # Run through each row manually and then upload the data.
+	        INSERT INTO priceData (ProductName, ProductCode, Barcode, Brand, Category, ProductTags, NumberofMatches, [Index], Position, CheapestSite, HighestSite, MinimumPrice, MaximumPrice, AveragePrice, MyPrice, ProductCost, SmartPrice, LastUpdateCycle, [Site], SiteIndex, Price, Changedirection, Stock)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            row.ProductName,
+            row.ProductCode,
+            row.Barcode,
+            row.Brand, 
+            row.Category,
+            row.ProductTags,
+            row.NumberofMatches,
+            row.Index,
+            row.Position,
+            row.CheapestSite,
+            row.HighestSite,
+            row.MinimumPrice,
+            row.MaximumPrice,
+            row.AveragePrice,
+            row.MyPrice,
+            row.ProductCost,
+            row.SmartPrice,
+            row.LastUpdateCycle,
+            row.Site,
+            row.SiteIndex,
+            row.Price,
+            row.Changedirection,
+            row.Stock,
+            ) 
         connect.close()
 
 ALLOWED_EXTENSIONS = {'xlsx', 'csv'}
@@ -52,12 +71,16 @@ class uploadData(Resource):
         f = request.files['file']
         f.save(UPLOAD_DIRECTORY + secure_filename(f.filename))
 
-        if f.filename.rsplit('.', 1)[1].lower() == 'xlsx':
+        if f.filename.rsplit('.', 1)[1].lower() == 'xlsx': # Change this to check if its not accepted filename then do and if for xlsx to change to csv
             read_file = pd.read_excel(f)
             read_file.insert(0, "Id", "")
             read_file.to_csv(r'server/files/Products.csv', index = None, header=True)
             
-            MssqlConnection().operate_database()
+            data = pd.read_csv (r'server/files/Products.csv')
+            df = pd.DataFrame(data)
+            df.columns = [c.replace(' ', '') for c in df.columns]
+            for row in df.itertuples():
+                MssqlConnection().operate_database(row)
 
             return 'File added to db successfully', 200
             # TODO: Implement that it deletes the files as this should save on things.
