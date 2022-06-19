@@ -5,19 +5,37 @@ from flask_restful import Resource, Api, reqparse
 from werkzeug.utils import secure_filename
 import pandas as pd
 
-username = "api"
-password = "ghk@MJD!ydh!vyv7vrh"
+class MssqlConnection():
+    def __init__(self):
+        self.SERVER = 'mssql-80552-0.cloudclusters.net'
+        self.PORT = 19083
+        self.UID = 'api'
+        self.PASSWORD = 'ghk@MJD!ydh!vyv7vrh'
+        self.DATABASE = 'PBI-DATA'
 
-conn = pyodbc.connect('Driver={SQL Server};'
-                      'UID='+username+';'
-                      'PWD='+ password+';'
-                      'Server=mssql-80552-0.cloudclusters.net,19083;'
-                      'Database=PBI-DATA;'
-                      'Trusted_Connection=yes;')
-# conn = pyodbc.connect('Driver={SQL Server};'
-#                       'Server=OLIVER-LAPTOP-W\SQLEXPRESS;'
-#                       'Database=master;'
-#                       'Trusted_Connection=yes;')
+    def connect_mssql(self):
+        conn = pyodbc.connect(
+            'DRIVER={ODBC Driver 17 for SQL Server};'
+            'SERVER=%s,%s;'
+            'DATABASE=%s;'
+            'UID=%s;'
+            'PWD=%s' % (self.SERVER, self.PORT, self.DATABASE, self.UID, self.PASSWORD),
+            autocommit=True)
+        return conn
+
+    def operate_database(self):
+        connect = self.connect_mssql()
+        cursor = connect.cursor()
+        cursor.execute(r"""
+	        BULK INSERT [PBI-DATA].[dbo].[priceData]
+	        FROM 'C:\Users\Oliver Beardsall\GitKraken\DB-Upload\server\files\Products.csv'
+	        WITH (FIRSTROW = 2,
+	        FIELDTERMINATOR = ',',
+	        ROWTERMINATOR='\n',
+	        MAXERRORS=2);
+            """) # TODO: Make it so that the path is not explicit as then it doesnt matter where this is located.
+            # Run through each row manually and then upload the data.
+        connect.close()
 
 ALLOWED_EXTENSIONS = {'xlsx', 'csv'}
 UPLOAD_DIRECTORY = "server/files/"
@@ -39,16 +57,8 @@ class uploadData(Resource):
             read_file.insert(0, "Id", "")
             read_file.to_csv(r'server/files/Products.csv', index = None, header=True)
             
-            cursor = conn.cursor()
-            cursor.execute(r"""
-	        BULK INSERT Master.dbo.priceData
-	        FROM 'C:\Users\Oliver Beardsall\GitKraken\DB-Upload\server\files\Products.csv'
-	        WITH (FIRSTROW = 2,
-	        FIELDTERMINATOR = ',',
-	        ROWTERMINATOR='\n',
-	        MAXERRORS=2);
-            """) # TODO: Make it so that the path is not explicit as then it doesnt matter where this is located.
-            cursor.commit()
+            MssqlConnection().operate_database()
+
             return 'File added to db successfully', 200
             # TODO: Implement that it deletes the files as this should save on things.
         else:
