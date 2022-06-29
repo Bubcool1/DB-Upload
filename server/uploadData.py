@@ -7,7 +7,6 @@ import pandas as pd
 from dotenv import load_dotenv
 
 load_dotenv()
-os.getenv('SERVER')
 
 class MssqlConnection():
     def __init__(self):
@@ -61,7 +60,7 @@ class MssqlConnection():
         connect.close()
 
 ALLOWED_EXTENSIONS = {'xlsx', 'csv'}
-UPLOAD_DIRECTORY = "server/files/"
+UPLOAD_DIRECTORY = "files/"
 
 if not os.path.exists(UPLOAD_DIRECTORY):
     os.makedirs(UPLOAD_DIRECTORY)
@@ -70,32 +69,27 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
+# TODO: Make it make some sort of notification on failure.
 class uploadData(Resource):
     def post(self):
         f = request.files['file']
 
         if f.filename.rsplit('.', 1)[1].lower() == 'csv':
-            f.save(r'server/files/Products.csv')
+            f.save(r'files/Products.csv')
 
         if f.filename.rsplit('.', 1)[1].lower() == 'xlsx': # FIXME: The conversion doesnt work properly
             f.save(UPLOAD_DIRECTORY + secure_filename(f.filename))
             read_file = pd.read_excel(f)
-            # read_file.insert(0, "Id", "")
-            # read_file.to_csv(r'server/files/Products.csv', index = None, header=True,)
-            read_file.to_csv(r'server/files/Products.csv', index = False)
-        else:
+            read_file.to_csv(r'files/Products.csv', index = False)
+            os.remove(f.filename)
+        if f.filename.rsplit('.', 1)[1].lower() not in ALLOWED_EXTENSIONS:
             return 'Please upload a xlsx or csv file', 500
 
-        data = pd.read_csv (r'server/files/Products.csv')
+        data = pd.read_csv (r'files/Products.csv')
         df = pd.DataFrame(data)
         df.columns = [c.replace(' ', '') for c in df.columns]
         for row in df.itertuples():
             print(row)
             MssqlConnection().operate_database(row)
-
-        return 'File added to db successfully', 200 # TODO: When converting the file from csv to xlsx it doesnt do it properly for certain columns. (13)
-        # TODO: Implement that it deletes the files as this should save on things.
-        # else:
-        #     return 'Error occurred', 500
-        
-        return 'file uploaded successfully'
+        os.remove('files/Products.csv')
+        return 'File added to db successfully', 200
