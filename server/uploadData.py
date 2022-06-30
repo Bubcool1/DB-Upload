@@ -71,6 +71,7 @@ def allowed_file(filename):
 
 # TODO: Make it make some sort of notification on failure.
 # TODO: Make it check for an API token for security as this will be an api on the internet and an unprotected db is a terrible idea
+# TODO: If it fails half way through then delete that data so that it can be re-run without dev interaction.
 class uploadData(Resource):
     def post(self):
         f = request.files['file']
