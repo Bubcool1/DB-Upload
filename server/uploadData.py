@@ -70,6 +70,7 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # TODO: Make it make some sort of notification on failure.
+# TODO: Make it check for an API token for security as this will be an api on the internet and an unprotected db is a terrible idea
 class uploadData(Resource):
     def post(self):
         f = request.files['file']
@@ -81,7 +82,7 @@ class uploadData(Resource):
             f.save(UPLOAD_DIRECTORY + secure_filename(f.filename))
             read_file = pd.read_excel(f)
             read_file.to_csv(r'files/Products.csv', index = False)
-            os.remove(f.filename)
+            os.remove('files/' + f.filename)
         if f.filename.rsplit('.', 1)[1].lower() not in ALLOWED_EXTENSIONS:
             return 'Please upload a xlsx or csv file', 500
 
