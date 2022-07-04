@@ -28,7 +28,7 @@ class MssqlConnection():
             autocommit=True)
         return conn
 
-    def operate_database(self, row):
+    def addData(self, row):
         connect = self.connect_mssql()
         cursor = connect.cursor()
         cursor.execute(r"""
@@ -60,6 +60,13 @@ class MssqlConnection():
             str(row.Stock),
             ) 
         connect.close()
+    def removeData(self, dateTime):
+        connect = self.connect_mssql()
+        cursor = connect.cursor()
+        cursor.execute(r"""DELETE FROM priceData WHERE [LastUpdateCycle] = ?""",
+            str(dateTime)
+            ) 
+        connect.close()
 
 ALLOWED_EXTENSIONS = {'xlsx', 'csv'}
 UPLOAD_DIRECTORY = "files/"
@@ -71,11 +78,11 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# TODO: Make it make some sort of notification on failure. mailgun?
-# TODO: If it fails half way through then delete that data so that it can be re-run without dev interaction.
+# TODO: Make it make some sort of notification on failure. mailgun/mailjet?
 # TODO: Instead of printing every line, only print the error line if there is one and other than that just print a current/len
 class uploadData(Resource):
     def post(self):
+        print('Request Received')
         f = request.files['file']
         token = request.headers.get('token')
         if check(token) == False:
@@ -96,8 +103,15 @@ class uploadData(Resource):
         data = pd.read_csv (r'files/Products.csv')
         df = pd.DataFrame(data)
         df.columns = [c.replace(' ', '') for c in df.columns]
-        for row in df.itertuples():
-            print(row)
-            MssqlConnection().operate_database(row)
-        os.remove('files/Products.csv')
-        return 'File added to db successfully', 200
+        try:
+            for row in df.itertuples():
+                print(str(row[0]+1) + '/' + str(len(df.index)))
+                MssqlConnection().addData(row)
+            os.remove('files/Products.csv')
+            return 'File added to db successfully', 200
+        except Exception as e:
+            MssqlConnection().removeData(df['LastUpdateCycle'][1])
+            print('Oops, an error occurred. The data with the LastUpdateCycle of %s has been deleted from the table.' % df['LastUpdateCycle'][1])
+            print(e)
+            os.remove('files/Products.csv')
+            return 'Oops, an error occurred. The data with the LastUpdateCycle of %s has been deleted from the table.' % df['LastUpdateCycle'][1], 500

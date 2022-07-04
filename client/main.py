@@ -7,7 +7,7 @@ import requests
 from dotenv import load_dotenv
 
 load_dotenv()
-
+# NOTE: IF THE FOLDER IS OPEN THEN THERE IS A PERMISSIONS ERROR CLOSE THAT FOLDER THAT WILL FIX IT.
 class MonitorFolder(FileSystemEventHandler):
     
     def on_created(self, event):
@@ -18,6 +18,7 @@ class MonitorFolder(FileSystemEventHandler):
         file={'file': open(files,'rb')}
         headers = {'token': os.getenv('TOKEN')}
         r=requests.post(url,files=file, headers=headers)
+        print(r.text.strip() + ' - Code ' + str(r.status_code))
                   
 if __name__ == "__main__":
     src_path = sys.argv[1]
