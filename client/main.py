@@ -4,14 +4,20 @@ import time
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 
 class MonitorFolder(FileSystemEventHandler):
     
     def on_created(self, event):
         print(event.src_path, event.event_type)
-        url='http://127.0.0.1:5000/uploadData'
-        file={'file': open(event.src_path,'rb')}
-        r=requests.post(url,files=file)
+        url=os.getenv('URL')
+        files = event.src_path
+        assert os.path.isfile(files)
+        file={'file': open(files,'rb')}
+        headers = {'token': os.getenv('TOKEN')}
+        r=requests.post(url,files=file, headers=headers)
                   
 if __name__ == "__main__":
     src_path = sys.argv[1]
