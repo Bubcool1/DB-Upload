@@ -6,10 +6,12 @@ from werkzeug.utils import secure_filename
 import pandas as pd
 from dotenv import load_dotenv
 
-load_dotenv()
+from authCheck import check
+
 
 class MssqlConnection():
     def __init__(self):
+        load_dotenv()
         self.SERVER = os.getenv('SERVER')
         self.PORT = os.getenv('PORT')
         self.UID = os.getenv('UID')
@@ -69,21 +71,25 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# TODO: Make it make some sort of notification on failure.
-# TODO: Make it check for an API token for security as this will be an api on the internet and an unprotected db is a terrible idea
+# TODO: Make it make some sort of notification on failure. mailgun?
 # TODO: If it fails half way through then delete that data so that it can be re-run without dev interaction.
+# TODO: Instead of printing every line, only print the error line if there is one and other than that just print a current/len
 class uploadData(Resource):
     def post(self):
         f = request.files['file']
+        token = request.headers.get('token')
+        if check(token) == False:
+            return 'Unauthorised, key not found', 401
 
         if f.filename.rsplit('.', 1)[1].lower() == 'csv':
             f.save(r'files/Products.csv')
 
-        if f.filename.rsplit('.', 1)[1].lower() == 'xlsx': # FIXME: The conversion doesnt work properly
+        if f.filename.rsplit('.', 1)[1].lower() == 'xlsx':
             f.save(UPLOAD_DIRECTORY + secure_filename(f.filename))
             read_file = pd.read_excel(f)
             read_file.to_csv(r'files/Products.csv', index = False)
-            os.remove('files/' + f.filename)
+            deleteFilename = f.filename
+            os.remove('files/' + deleteFilename.replace(' ', '_', -1))
         if f.filename.rsplit('.', 1)[1].lower() not in ALLOWED_EXTENSIONS:
             return 'Please upload a xlsx or csv file', 500
 
