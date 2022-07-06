@@ -82,7 +82,7 @@ def allowed_file(filename):
 
 # TODO: Make it make some sort of notification on failure. mailgun/mailjet?
 # TODO: Print and email error line if error occurs.
-# FIXME: Fix progress bar, see readme below
+# FIXME: Fix progress bar, see FIXME below
 class uploadData(Resource):
     def post(self):
         print('Request Received')
