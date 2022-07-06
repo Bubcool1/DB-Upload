@@ -5,6 +5,8 @@ from flask_restful import Resource, Api, reqparse
 from werkzeug.utils import secure_filename
 import pandas as pd
 from dotenv import load_dotenv
+from progress.bar import Bar
+
 
 from authCheck import check
 
@@ -79,7 +81,8 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # TODO: Make it make some sort of notification on failure. mailgun/mailjet?
-# TODO: Instead of printing every line, only print the error line if there is one and other than that just print a current/len
+# TODO: Print and email error line if error occurs.
+# FIXME: Fix progress bar, see readme below
 class uploadData(Resource):
     def post(self):
         print('Request Received')
@@ -104,9 +107,12 @@ class uploadData(Resource):
         df = pd.DataFrame(data)
         df.columns = [c.replace(' ', '') for c in df.columns]
         try:
-            for row in df.itertuples():
-                print(str(row[0]+1) + '/' + str(len(df.index)))
-                MssqlConnection().addData(row)
+            with Bar('Uploading...', max=len(df.index)) as bar: #FIXME: Giving odd values eg 0/41/4 instead of 0/4
+                for row in df.itertuples():
+                    print(str(row[0]+1) + '/' + str(len(df.index)))
+                    MssqlConnection().addData(row)
+                    bar.next()
+                bar.finish()
             os.remove('files/Products.csv')
             return 'File added to db successfully', 200
         except Exception as e:
