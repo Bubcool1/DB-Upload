@@ -80,7 +80,7 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# TODO: Print and email error line if error occurs. NOTE Emails which LastUpdateCycle failed, not which line specifically currently
+# TODO: Make the code figure out which part made the insert fail. While keeping in mind the below TODO
 # FIXME: Fix progress bar, see FIXME below Also multiple lines. Possibly the df.index
 # TODO: Break into multiple files, move class above etc.
 # TODO: Speed it up, instead of iterating and doing many trans, do one and make it with many VALUES (row), within the INSERT INTO query.
