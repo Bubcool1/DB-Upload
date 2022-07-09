@@ -33,8 +33,8 @@ class MssqlConnection():
     def addData(self, row):
         connect = self.connect_mssql()
         cursor = connect.cursor()
-        cursor.execute(r"""
-	        INSERT INTO priceData (ProductName, ProductCode, Barcode, Brand, Category, ProductTags, NumberofMatches, [Index], Position, CheapestSite, HighestSite, MinimumPrice, MaximumPrice, AveragePrice, MyPrice, ProductCost, SmartPrice, LastUpdateCycle, [Site], SiteIndex, Price, Changedirection, Stock)
+        cursor.execute(f"""
+	        INSERT INTO {os.getenv('table')} (ProductName, ProductCode, Barcode, Brand, Category, ProductTags, NumberofMatches, [Index], Position, CheapestSite, HighestSite, MinimumPrice, MaximumPrice, AveragePrice, MyPrice, ProductCost, SmartPrice, LastUpdateCycle, [Site], SiteIndex, Price, Changedirection, Stock)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             str(row.ProductName),
@@ -65,7 +65,7 @@ class MssqlConnection():
     def removeData(self, dateTime):
         connect = self.connect_mssql()
         cursor = connect.cursor()
-        cursor.execute(r"""DELETE FROM priceData WHERE [LastUpdateCycle] = ?""",
+        cursor.execute(f"""DELETE FROM {os.getenv('table')} WHERE [LastUpdateCycle] = ?""",
             str(dateTime)
             ) 
         connect.close()
