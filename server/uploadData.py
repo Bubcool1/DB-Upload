@@ -7,8 +7,8 @@ import pandas as pd
 from dotenv import load_dotenv
 from progress.bar import Bar
 
-
 from authCheck import check
+from emailSend import sendEmail
 
 
 class MssqlConnection():
@@ -80,9 +80,10 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# TODO: Make it make some sort of notification on failure. mailgun/mailjet?
-# TODO: Print and email error line if error occurs.
-# FIXME: Fix progress bar, see FIXME below
+# TODO: Make the code figure out which part made the insert fail. While keeping in mind the below TODO
+# FIXME: Fix progress bar, see FIXME below Also multiple lines. Possibly the df.index
+# TODO: Break into multiple files, move class above etc.
+# TODO: Speed it up, instead of iterating and doing many trans, do one and make it with many VALUES (row), within the INSERT INTO query.
 class uploadData(Resource):
     def post(self):
         print('Request Received')
@@ -106,18 +107,19 @@ class uploadData(Resource):
         data = pd.read_csv (r'files/Products.csv')
         df = pd.DataFrame(data)
         df.columns = [c.replace(' ', '') for c in df.columns]
+        os.remove('files/Products.csv')
         try:
-            with Bar('Uploading...', max=len(df.index)) as bar: #FIXME: Giving odd values eg 0/41/4 instead of 0/4
+            with Bar('Uploading...', max=len(df.index)) as bar: #FIXME: Giving odd values eg 0/41/4 instead of 0/4 they are combining and doing twice for *reasons*
                 for row in df.itertuples():
                     print(str(row[0]+1) + '/' + str(len(df.index)))
                     MssqlConnection().addData(row)
                     bar.next()
                 bar.finish()
-            os.remove('files/Products.csv')
+                sendEmail('DB Upload Complete', 'Upload Complete, Last Update Cycle of %s' % df['LastUpdateCycle'][1])
             return 'File added to db successfully', 200
         except Exception as e:
             MssqlConnection().removeData(df['LastUpdateCycle'][1])
             print('Oops, an error occurred. The data with the LastUpdateCycle of %s has been deleted from the table.' % df['LastUpdateCycle'][1])
             print(e)
-            os.remove('files/Products.csv')
+            sendEmail('DB Upload Failed', 'Upload failed, data for last update cycle of %s has been deleted.' % df['LastUpdateCycle'][1])
             return 'Oops, an error occurred. The data with the LastUpdateCycle of %s has been deleted from the table.' % df['LastUpdateCycle'][1], 500
