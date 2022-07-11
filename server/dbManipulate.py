@@ -21,37 +21,22 @@ class MssqlConnection():
             autocommit=True)
         return conn
 
-    def addData(self, row):
+    def addData(self, values):
         connect = self.connect_mssql()
+        connect.setdecoding(pyodbc.SQL_CHAR, encoding='latin1')
+        connect.setencoding('latin1')
         cursor = connect.cursor()
-        cursor.execute(f"""
-	        INSERT INTO {os.getenv('table')} (ProductName, ProductCode, Barcode, Brand, Category, ProductTags, NumberofMatches, [Index], Position, CheapestSite, HighestSite, MinimumPrice, MaximumPrice, AveragePrice, MyPrice, ProductCost, SmartPrice, LastUpdateCycle, [Site], SiteIndex, Price, Changedirection, Stock)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            str(row.ProductName),
-            str(row.ProductCode),
-            str(row.Barcode),
-            str(row.Brand),
-            str(row.Category),
-            str(row.ProductTags),
-            str(row.NumberofMatches),
-            str(row.Index),
-            str(row.Position),
-            str(row.CheapestSite),
-            str(row.HighestSite),
-            str(row.MinimumPrice),
-            str(row.MaximumPrice),
-            str(row.AveragePrice),
-            str(row.MyPrice),
-            str(row.ProductCost),
-            str(row.SmartPrice),
-            str(row.LastUpdateCycle),
-            str(row.Site),
-            str(row.SiteIndex),
-            str(row.Price),
-            str(row.Changedirection),
-            str(row.Stock),
-            ) 
+        try:
+            #FIXME: Get error 'Not all arguments converted during string formatting' caused by env variable or putting table name within execute string
+            print(values)
+            cursor.execute("""
+                INSERT INTO priceData (ProductName, ProductCode, Barcode, Brand, Category, ProductTags, NumberofMatches, [Index], Position, CheapestSite, HighestSite, MinimumPrice, MaximumPrice, AveragePrice, MyPrice, ProductCost, SmartPrice, LastUpdateCycle, [Site], SiteIndex, Price, Changedirection, Stock)
+                VALUES""" + values) 
+        except Exception as e:
+            cursor.rollback()
+            print(e)
+        else:
+            cursor.commit()
         connect.close()
     def removeData(self, dateTime):
         connect = self.connect_mssql()

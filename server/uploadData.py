@@ -49,14 +49,36 @@ class uploadData(Resource):
         df = pd.DataFrame(data)
         df.columns = [c.replace(' ', '') for c in df.columns]
         os.remove('files/Products.csv')
+        values = ''
         try:
-            with Bar('Uploading...', max=len(df.index)) as bar: #FIXME: Giving odd values eg 0/41/4 instead of 0/4 they are combining and doing twice for *reasons*
-                for row in df.itertuples():
-                    print(str(row[0]+1) + '/' + str(len(df.index)))
-                    MssqlConnection().addData(row)
-                    bar.next()
-                bar.finish()
-                sendEmail('DB Upload Complete', 'Upload Complete, Last Update Cycle of %s' % df['LastUpdateCycle'][1])
+            for row in df.itertuples():
+                values = values + "('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s'),\n" % (
+                str(row.ProductName),
+                str(row.ProductCode),
+                str(row.Barcode),
+                str(row.Brand),
+                str(row.Category),
+                str(row.ProductTags),
+                str(row.NumberofMatches),
+                str(row.Index),
+                str(row.Position),
+                str(row.CheapestSite),
+                str(row.HighestSite),
+                str(row.MinimumPrice),
+                str(row.MaximumPrice),
+                str(row.AveragePrice),
+                str(row.MyPrice),
+                str(row.ProductCost),
+                str(row.SmartPrice),
+                str(row.LastUpdateCycle),
+                str(row.Site),
+                str(row.SiteIndex),
+                str(row.Price),
+                str(row.Changedirection),
+                str(row.Stock))
+            values = values[:-2]
+            MssqlConnection().addData(values)
+            sendEmail('DB Upload Complete', 'Upload Complete, Last Update Cycle of %s' % df['LastUpdateCycle'][1])
             return 'File added to db successfully', 200
         except Exception as e:
             MssqlConnection().removeData(df['LastUpdateCycle'][1])
