@@ -1,5 +1,4 @@
 import os
-import pyodbc
 from flask import Flask, flash, request, redirect, url_for
 from flask_restful import Resource, Api, reqparse
 from werkzeug.utils import secure_filename
@@ -9,66 +8,8 @@ from progress.bar import Bar
 
 from authCheck import check
 from emailSend import sendEmail
+from dbManipulate import *
 
-
-class MssqlConnection():
-    def __init__(self):
-        load_dotenv()
-        self.SERVER = os.getenv('SERVER')
-        self.PORT = os.getenv('PORT')
-        self.UID = os.getenv('UID')
-        self.PASSWORD = os.getenv('PASSWORD')
-        self.DATABASE = os.getenv('DATABASE')
-
-    def connect_mssql(self):
-        conn = pyodbc.connect(
-            'DRIVER={ODBC Driver 17 for SQL Server};'
-            'SERVER=%s,%s;'
-            'DATABASE=%s;'
-            'UID=%s;'
-            'PWD=%s' % (self.SERVER, self.PORT, self.DATABASE, self.UID, self.PASSWORD),
-            autocommit=True)
-        return conn
-
-    def addData(self, row):
-        connect = self.connect_mssql()
-        cursor = connect.cursor()
-        cursor.execute(f"""
-	        INSERT INTO {os.getenv('table')} (ProductName, ProductCode, Barcode, Brand, Category, ProductTags, NumberofMatches, [Index], Position, CheapestSite, HighestSite, MinimumPrice, MaximumPrice, AveragePrice, MyPrice, ProductCost, SmartPrice, LastUpdateCycle, [Site], SiteIndex, Price, Changedirection, Stock)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """,
-            str(row.ProductName),
-            str(row.ProductCode),
-            str(row.Barcode),
-            str(row.Brand),
-            str(row.Category),
-            str(row.ProductTags),
-            str(row.NumberofMatches),
-            str(row.Index),
-            str(row.Position),
-            str(row.CheapestSite),
-            str(row.HighestSite),
-            str(row.MinimumPrice),
-            str(row.MaximumPrice),
-            str(row.AveragePrice),
-            str(row.MyPrice),
-            str(row.ProductCost),
-            str(row.SmartPrice),
-            str(row.LastUpdateCycle),
-            str(row.Site),
-            str(row.SiteIndex),
-            str(row.Price),
-            str(row.Changedirection),
-            str(row.Stock),
-            ) 
-        connect.close()
-    def removeData(self, dateTime):
-        connect = self.connect_mssql()
-        cursor = connect.cursor()
-        cursor.execute(f"""DELETE FROM {os.getenv('table')} WHERE [LastUpdateCycle] = ?""",
-            str(dateTime)
-            ) 
-        connect.close()
 
 ALLOWED_EXTENSIONS = {'xlsx', 'csv'}
 UPLOAD_DIRECTORY = "files/"
@@ -108,15 +49,40 @@ class uploadData(Resource):
         df = pd.DataFrame(data)
         df.columns = [c.replace(' ', '') for c in df.columns]
         os.remove('files/Products.csv')
+        values = ''
         try:
-            with Bar('Uploading...', max=len(df.index)) as bar: #FIXME: Giving odd values eg 0/41/4 instead of 0/4 they are combining and doing twice for *reasons*
-                for row in df.itertuples():
-                    print(str(row[0]+1) + '/' + str(len(df.index)))
-                    MssqlConnection().addData(row)
-                    bar.next()
-                bar.finish()
+            for row in df.itertuples():
+                values = values + "('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s'),\n" % (
+                str(row.ProductName),
+                str(row.ProductCode),
+                str(row.Barcode),
+                str(row.Brand),
+                str(row.Category),
+                str(row.ProductTags),
+                str(row.NumberofMatches),
+                str(row.Index),
+                str(row.Position),
+                str(row.CheapestSite),
+                str(row.HighestSite),
+                str(row.MinimumPrice),
+                str(row.MaximumPrice),
+                str(row.AveragePrice),
+                str(row.MyPrice),
+                str(row.ProductCost),
+                str(row.SmartPrice),
+                str(row.LastUpdateCycle),
+                str(row.Site),
+                str(row.SiteIndex),
+                str(row.Price),
+                str(row.Changedirection),
+                str(row.Stock))
+            values = values[:-2]
+            response = MssqlConnection().addData(values)
+            if response == 200:
                 sendEmail('DB Upload Complete', 'Upload Complete, Last Update Cycle of %s' % df['LastUpdateCycle'][1])
-            return 'File added to db successfully', 200
+                return 'File added to db successfully', 200
+            else:
+                raise Exception("An error occurred")
         except Exception as e:
             MssqlConnection().removeData(df['LastUpdateCycle'][1])
             print('Oops, an error occurred. The data with the LastUpdateCycle of %s has been deleted from the table.' % df['LastUpdateCycle'][1])
