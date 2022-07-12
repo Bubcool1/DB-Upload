@@ -22,6 +22,7 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 # TODO: Make the code figure out which part made the insert fail.
+# FIXME: Handle having a file that is longer than 2000 rows. Handling 2000 row max currently with solution but not perfect.
 class uploadData(Resource):
     def post(self):
         print('Request Received')
@@ -47,34 +48,64 @@ class uploadData(Resource):
         df.columns = [c.replace(' ', '') for c in df.columns]
         os.remove('files/Products.csv')
         values = ''
+        values2 = ''
         try:
             for row in df.itertuples():
-                values = values + "('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s'),\n" % (
-                str(row.ProductName),
-                str(row.ProductCode),
-                str(row.Barcode),
-                str(row.Brand),
-                str(row.Category),
-                str(row.ProductTags),
-                str(row.NumberofMatches),
-                str(row.Index),
-                str(row.Position),
-                str(row.CheapestSite),
-                str(row.HighestSite),
-                str(row.MinimumPrice),
-                str(row.MaximumPrice),
-                str(row.AveragePrice),
-                str(row.MyPrice),
-                str(row.ProductCost),
-                str(row.SmartPrice),
-                str(row.LastUpdateCycle),
-                str(row.Site),
-                str(row.SiteIndex),
-                str(row.Price),
-                str(row.Changedirection),
-                str(row.Stock))
+                if row.Index <= 1000:
+                    values = values + "('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s'),\n" % (
+                    str(row.ProductName),
+                    str(row.ProductCode),
+                    str(row.Barcode),
+                    str(row.Brand),
+                    str(row.Category),
+                    str(row.ProductTags),
+                    str(row.NumberofMatches),
+                    str(row.Index),
+                    str(row.Position),
+                    str(row.CheapestSite),
+                    str(row.HighestSite),
+                    str(row.MinimumPrice),
+                    str(row.MaximumPrice),
+                    str(row.AveragePrice),
+                    str(row.MyPrice),
+                    str(row.ProductCost),
+                    str(row.SmartPrice),
+                    str(row.LastUpdateCycle),
+                    str(row.Site),
+                    str(row.SiteIndex),
+                    str(row.Price),
+                    str(row.Changedirection),
+                    str(row.Stock))
+                else:
+                    values2 = values2 + "('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s'),\n" % (
+                    str(row.ProductName),
+                    str(row.ProductCode),
+                    str(row.Barcode),
+                    str(row.Brand),
+                    str(row.Category),
+                    str(row.ProductTags),
+                    str(row.NumberofMatches),
+                    str(row.Index),
+                    str(row.Position),
+                    str(row.CheapestSite),
+                    str(row.HighestSite),
+                    str(row.MinimumPrice),
+                    str(row.MaximumPrice),
+                    str(row.AveragePrice),
+                    str(row.MyPrice),
+                    str(row.ProductCost),
+                    str(row.SmartPrice),
+                    str(row.LastUpdateCycle),
+                    str(row.Site),
+                    str(row.SiteIndex),
+                    str(row.Price),
+                    str(row.Changedirection),
+                    str(row.Stock))
             values = values[:-2]
             response = MssqlConnection().addData(values)
+            if values2 != '':
+                values2 = values2[:-2]
+                response = MssqlConnection().addData(values2)
             if response == 200:
                 sendEmail('DB Upload Complete', 'Upload Complete, Last Update Cycle of %s' % df['LastUpdateCycle'][1])
                 return 'File added to db successfully', 200
