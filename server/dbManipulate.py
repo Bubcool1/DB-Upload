@@ -27,17 +27,17 @@ class MssqlConnection():
         connect.setencoding('latin1')
         cursor = connect.cursor()
         try:
-            #FIXME: Get error 'Not all arguments converted during string formatting' caused by env variable or putting table name within execute string
             print(values)
             sql = """INSERT INTO %s (ProductName, ProductCode, Barcode, Brand, Category, ProductTags, NumberofMatches, [Index], Position, CheapestSite, HighestSite, MinimumPrice, MaximumPrice, AveragePrice, MyPrice, ProductCost, SmartPrice, LastUpdateCycle, [Site], SiteIndex, Price, Changedirection, Stock)
                 VALUES""" % os.getenv('TABLE')
-            cursor.execute(sql + values) 
+            cursor.execute(sql + values)
         except Exception as e:
             cursor.rollback()
             print(e)
-            return e, 500
+            return 500
         else:
             cursor.commit()
+            return 200
         connect.close()
     def removeData(self, dateTime):
         connect = self.connect_mssql()

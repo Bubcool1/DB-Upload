@@ -77,9 +77,12 @@ class uploadData(Resource):
                 str(row.Changedirection),
                 str(row.Stock))
             values = values[:-2]
-            MssqlConnection().addData(values)
-            sendEmail('DB Upload Complete', 'Upload Complete, Last Update Cycle of %s' % df['LastUpdateCycle'][1])
-            return 'File added to db successfully', 200
+            response = MssqlConnection().addData(values)
+            if response == 200:
+                sendEmail('DB Upload Complete', 'Upload Complete, Last Update Cycle of %s' % df['LastUpdateCycle'][1])
+                return 'File added to db successfully', 200
+            else:
+                raise Exception("An error occurred")
         except Exception as e:
             MssqlConnection().removeData(df['LastUpdateCycle'][1])
             print('Oops, an error occurred. The data with the LastUpdateCycle of %s has been deleted from the table.' % df['LastUpdateCycle'][1])
