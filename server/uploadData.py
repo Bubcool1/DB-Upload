@@ -21,8 +21,6 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-# TODO: Make the code figure out which part made the insert fail.
-# FIXME: Handle having a file that is longer than 2000 rows. Handling 2000 row max currently with solution but not perfect.
 class uploadData(Resource):
     def post(self):
         print('Request Received')
