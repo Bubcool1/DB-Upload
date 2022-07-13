@@ -30,6 +30,8 @@ steps:
     pip install -r requirements.txt
   displayName: 'Install dependencies'
 
-- script: |
-    pip install requirements.txt
-  displayName: 'Install Requirements'
+    - task: PythonScript@0
+      inputs:
+        scriptSource: 'filePath'
+        scriptPath: 'main.py'
+        workingDirectory: 'server'
