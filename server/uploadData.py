@@ -4,7 +4,7 @@ from flask_restful import Resource, Api, reqparse
 from werkzeug.utils import secure_filename
 import pandas as pd
 from dotenv import load_dotenv
-from progress.bar import Bar
+# from progress.bar import Bar
 
 from authCheck import check
 from emailSend import sendEmail

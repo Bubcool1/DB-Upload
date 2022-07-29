@@ -1,7 +1,5 @@
-import pyodbc
-from flask import Flask, flash, request, redirect, url_for
+from flask import Flask
 from flask_restful import Resource, Api, reqparse
-from users import Users
 from uploadData import uploadData
 
 app = Flask(__name__)
@@ -10,11 +8,14 @@ UPLOAD_FOLDER = '/files'
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-Users()
 uploadData()
+class test(Resource):
+    def get(self):
+        return 'Test confirmed', 200
 
-api.add_resource(Users, '/users')  # '/users' is our entry point
-api.add_resource(uploadData, '/uploadData')  # '/uploadData' is our entry point
+
+api.add_resource(uploadData, '/uploadData')
+api.add_resource(test, '/test')
 
 if __name__ == '__main__':
     app.run()  # run our Flask app
