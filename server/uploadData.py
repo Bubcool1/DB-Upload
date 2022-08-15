@@ -49,7 +49,7 @@ class uploadData(Resource):
         values2 = ''
         try:
             for row in df.itertuples():
-                if row.Index <= 1000:
+                if row.Index < 1000:
                     values = values + "('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s'),\n" % (
                     str(row.ProductName),
                     str(row.ProductCode),
