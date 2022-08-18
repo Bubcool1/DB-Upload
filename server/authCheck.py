@@ -1,12 +1,5 @@
 import os
 import pyodbc
-from flask import Flask, flash, request, redirect, url_for
-from flask_restful import Resource, Api, reqparse
-from werkzeug.utils import secure_filename
-import pandas as pd
-from dotenv import load_dotenv
-
-load_dotenv()
 
 class MssqlConnection():
     def __init__(self):

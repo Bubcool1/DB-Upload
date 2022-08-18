@@ -1,10 +1,8 @@
 import os
 import pyodbc
-from dotenv import load_dotenv
 
 class MssqlConnection():
     def __init__(self):
-        load_dotenv()
         self.SERVER = os.getenv('SERVER')
         self.PORT = os.getenv('PORT')
         self.UID = os.getenv('UID')

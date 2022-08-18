@@ -1,9 +1,8 @@
 import os
-from flask import Flask, flash, request, redirect, url_for
-from flask_restful import Resource, Api, reqparse
+from flask import request
+from flask_restful import Resource
 from werkzeug.utils import secure_filename
 import pandas as pd
-from dotenv import load_dotenv
 # from progress.bar import Bar
 
 from authCheck import check
@@ -26,6 +25,7 @@ class uploadData(Resource):
         print('Request Received')
         f = request.files['file']
         token = request.headers.get('token')
+        db = request.headers.get('database')
         if check(token) == False:
             return 'Unauthorised, key not found', 401
 
