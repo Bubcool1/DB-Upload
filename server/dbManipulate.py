@@ -2,12 +2,12 @@ import os
 import pyodbc
 
 class MssqlConnection():
-    def __init__(self):
+    def __init__(self, db):
         self.SERVER = os.getenv('SERVER')
         self.PORT = os.getenv('PORT')
         self.UID = os.getenv('UID')
         self.PASSWORD = os.getenv('PASSWORD')
-        self.DATABASE = os.getenv('DATABASE')
+        self.DATABASE = db
 
     def connect_mssql(self):
         conn = pyodbc.connect(

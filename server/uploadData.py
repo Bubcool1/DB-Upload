@@ -100,18 +100,18 @@ class uploadData(Resource):
                     str(row.Changedirection),
                     str(row.Stock))
             values = values[:-2]
-            response = MssqlConnection().addData(values)
+            response = MssqlConnection(db).addData(values)
             if values2 != '':
                 values2 = values2[:-2]
-                response = MssqlConnection().addData(values2)
+                response = MssqlConnection(db).addData(values2)
             if response == 200:
-                sendEmail('DB Upload Complete', 'Upload Complete, Last Update Cycle of %s' % df['LastUpdateCycle'][1])
-                return 'File added to db successfully', 200
+                sendEmail('DB Upload Complete', 'Upload Complete, Last Update Cycle of %s added to database %s' % (df['LastUpdateCycle'][1], db))
+                return 'File added to %s successfully' % db, 200
             else:
                 raise Exception("An error occurred")
         except Exception as e:
-            MssqlConnection().removeData(df['LastUpdateCycle'][1])
+            MssqlConnection(db).removeData(df['LastUpdateCycle'][1])
             print('Oops, an error occurred. The data with the LastUpdateCycle of %s has been deleted from the table.' % df['LastUpdateCycle'][1])
             print(e)
-            sendEmail('DB Upload Failed', 'Upload failed, data for last update cycle of %s has been deleted.' % df['LastUpdateCycle'][1])
-            return 'Oops, an error occurred. The data with the LastUpdateCycle of %s has been deleted from the table.' % df['LastUpdateCycle'][1], 500
+            sendEmail('DB Upload Failed', 'Upload failed, data for last update cycle of %s has been deleted from database %s.' % (df['LastUpdateCycle'][1], db))
+            return 'Oops, an error occurred. The data with the LastUpdateCycle of %s has been deleted from the table on %s.' % (df['LastUpdateCycle'][1], db), 500
