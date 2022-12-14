@@ -48,8 +48,8 @@ class uploadData(Resource):
         values = []
         response = []
         try:
+            valuesIterator = 0
             for row in df.itertuples():
-                valuesIterator = 0
                 if row.Index % 1000 == 0 and row.Index != 0:
                     valuesIterator += 1
                     values.append('')
